@@ -1,0 +1,28 @@
+version: '3.1'
+
+services:
+
+  wpplagin:
+    image: wordpress
+    restart: always
+    ports:
+      - 80:80
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wpplagin
+      WORDPRESS_DB_PASSWORD: wpplagin
+      WORDPRESS_DB_NAME: wpplagin
+    volumes:
+      - ./src/:/var/www/html
+
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: wpplagin
+      MYSQL_USER: wpplagin
+      MYSQL_PASSWORD: wpplagin
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+    volumes:
+      - ./db/:/var/lib/mysql
+
