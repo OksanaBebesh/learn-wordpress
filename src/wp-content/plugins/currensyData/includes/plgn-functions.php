@@ -26,6 +26,11 @@ function set_plugin_settings() {
         'option_curs_check',
         'sanitize_callback');
 
+    register_setting(
+        'option_group',
+        'option_plugin_mode',
+        'sanitize_callback');
+
     // параметры: $id, $title, $callback, $page
     add_settings_section(
         'section_id',
@@ -58,37 +63,112 @@ function plaginPageSettings() {
     <?php
 }
 
+function fillMode() {
+    $optionMode = get_option('option_plugin_mode');
+
+    echo '<input type="radio" name="option_plugin_mode" '.checked($optionMode,'live').' value="live">live';
+    echo '<input type="radio" name="option_plugin_mode" '.checked($optionMode,'cron').'  value="cron">cron';
+}
+
 function fillCurrensy() {
     $currencyArray = [
         '978' => 'euro',
         '643' => 'usa',
         '840' => 'rus'
     ];
-    $getCurrensy = get_option('option_curs_check');
-    $getCurrensy = json_encode($getCurrensy);
-
+    $getCurrensy = array_keys(get_option('option_curs_check'));
+    $checkElement = '';
     if ($getCurrensy) {
         foreach ($currencyArray as $valueCurrency => $index) {
+           $checkElement = (in_array($valueCurrency,$getCurrensy) ) ? "checked" : '';
+
             echo '
             <label>
             <input 
             type="checkbox" 
             name="option_curs_check[' . $valueCurrency . ']" 
             value="1"
-            checked( 1, $valueCurrency  ) 
+            '. $checkElement .'
             >' . $index . '</label>';
         }
     }
-//    else {
-//
-//        foreach ($getCurrensy as $value => $index) {
-//            echo '<input type="checkbox"
-//            name="option_curs_check['.$value.']"
-//            value="1"
-//            '.checked($value).'
-//            />' . $value;
-//        }
- //   }
+    else {
+
+        foreach ($currencyArray as $value => $index) {
+            echo '<label><input type="checkbox"
+            name="option_curs_check['.$value.']"
+            value="1"
+            />' . $index. '</label>';
+        }
+    }
 
 
 }
+
+
+
+// Register and load the widget
+function wpb_load_widget() {
+    register_widget( 'wpb_widget' );
+}
+add_action( 'widgets_init', 'wpb_load_widget' );
+
+// Creating the widget
+class wpb_widget extends WP_Widget {
+
+    function __construct() {
+        parent::__construct(
+
+// Base ID of your widget
+            'wpb_widget',
+
+// Widget name will appear in UI
+            __('Currency data', 'wpb_widget_domain'),
+
+// Widget description
+            array( 'description' => __( 'Display currency data', 'wpb_widget_domain' ), )
+        );
+    }
+
+// Creating widget front-end
+
+    public function widget( $args, $instance ) {
+        $title = apply_filters( 'widget_title', $instance['title'] );
+
+// before and after widget arguments are defined by themes
+        echo $args['before_widget'];
+        if ( ! empty( $title ) )
+            echo $args['before_title'] . $title . $args['after_title'];
+
+// This is where you run the code and display the output
+        echo __( 'актуальные курсы валют:', 'wpb_widget_domain' );
+
+        echo $args['after_widget'];
+    }
+
+// Widget Backend
+    public function form( $instance ) {
+        if ( isset( $instance[ 'title' ] ) ) {
+            $title = $instance[ 'title' ];
+        }
+        else {
+            $title = __( 'New title', 'wpb_widget_domain' );
+        }
+// Widget admin form
+        ?>
+
+
+        <label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label>
+        <input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
+
+
+        <?php
+    }
+
+// Updating widget replacing old instances with new
+    public function update( $new_instance, $old_instance ) {
+        $instance = array();
+        $instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
+        return $instance;
+    }
+} // Class wpb_widget ends here
