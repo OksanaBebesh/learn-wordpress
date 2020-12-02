@@ -41,7 +41,6 @@ function set_plugin_settings() {
     // параметры: $id, $title, $callback, $page, $section, $args
     add_settings_field('mode', 'Режим работы плагина', 'fillMode', 'plaginPageSlug', 'section_id');
     add_settings_field('currency', 'Валюта', 'fillCurrensy', 'plaginPageSlug', 'section_id');
-
 }
 
 
@@ -104,6 +103,56 @@ function fillCurrensy() {
 
 }
 
+function saveLog(string $str_to_log = '') {
+
+    $f = fopen(__DIR__ . '/../logs/1.txt', 'a+');
+    fputs($f, date('d.m.Y H:i:s') . '. ' . $str_to_log . "\n");
+    fclose($f);
+
+}
+
+add_filter('cron_schedules', 'cron_add_five_sec');
+function cron_add_five_sec($schedules) {
+
+    if (!isset($schedules['60_sec'])) {
+
+        $schedules['60_sec'] = array(
+            'interval' => 60,
+            'display'  => 'Раз в 60 sec'
+        );
+
+    }
+
+//    saveLog(var_export($schedules,true));
+
+    return $schedules;
+}
+
+add_action('update_option_option_plugin_mode', function ($old_value, $value) {
+
+    switch ($value) {
+        case 'cron':
+            if (!wp_next_scheduled('wpplagin_geting_course')) {
+
+                wp_schedule_event(strtotime(date('Y-m-d H:i:s')), 'hourly', 'wpplagin_geting_course');
+
+            }
+            saveLog('update_option_option_plugin_mode-cron');
+            break;
+        case 'live':
+            wp_clear_scheduled_hook('wpplagin_geting_course');
+            saveLog('update_option_option_plugin_mode-live');
+            break;
+    }
+
+}, 10, 2);
+
+
+function get_wpplagin_geting_course_nbrb() {
+    saveLog('get_wpplagin_geting_course_nbrb');
+}
+
+add_action('wpplagin_geting_course', 'get_wpplagin_geting_course_nbrb');
 
 // Register and load the widget
 function wpb_load_widget() {
@@ -146,8 +195,12 @@ class wpb_widget extends WP_Widget {
 
         require_once plugin_dir_path(__FILE__) . '/curl.php';
         if (get_option('option_plugin_mode') == 'live') {
+
+
             $currencyDataGet = curlGet();
             $currencyOptions = array_keys(get_option('option_curs_check'));
+
+
             foreach ($currencyDataGet as $value) {
                 if (in_array(strtolower($value->Cur_Abbreviation), $currencyOptions)) {
 
@@ -156,6 +209,9 @@ class wpb_widget extends WP_Widget {
                 }
 
             }
+        } elseif (get_option('option_plugin_mode') == 'cron') {
+
+
         }
     }
 

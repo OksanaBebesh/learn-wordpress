@@ -22,16 +22,17 @@ function curlGet() {
     $response = curl_exec($ch);
     $info = curl_getinfo($ch);
     curl_close($ch); // close cURL handler
-var_dump($info['http_code']);
-   var_dump(curl_errno($ch));
-   var_dump(curl_error($ch));
+
     if ($info['http_code'] == 200) {
        $response = json_decode($response);
     } else {
        $response = "Data not found: <br />";
     }
 
-    curl_close($ch); // close cURL handler
+
 
     return $response;
 }
+
+
+
