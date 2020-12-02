@@ -12,7 +12,16 @@ require_once plugin_dir_path(__FILE__) . 'includes/plgn-functions.php';
 
 add_action('wpplagin_geting_course', 'get_wpplugin_geting_course_nbrb');
 function get_wpplugin_geting_course_nbrb() {
-    $currencyDataGet = curlGet();
+    $fields = array(
+        "ondate"      => date('Y-m-d'),
+        "periodicity" => 0
+    );
+    $response = wp_remote_get(
+        'https://www.nbrb.by/api/exrates/rates?'.http_build_query($fields),
+        array( 'timeout' => 120, 'httpversion' => '1.1')
+    );
+    $currencyDataGet = wp_remote_retrieve_body( $response );
+    $currencyDataGet =json_decode($currencyDataGet,false );
     $currencyOptions = array_keys(get_option('option_curs_check'));
     $arrayOptions = [];
     $arrayOptions['Date'] = date('d.m.Y H:i:s');
