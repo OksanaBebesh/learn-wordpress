@@ -183,10 +183,19 @@ class wpb_widget extends WP_Widget {
 
         echo $args['after_widget'];
 
-        require_once plugin_dir_path(__FILE__) . '/curl.php';
         if (get_option('option_plugin_mode') == 'live') {
 
-            $currencyDataGet = curlGet();
+
+            $fields = array(
+                "ondate"      => date('Y-m-d'),
+                "periodicity" => 0
+            );
+            $response = wp_remote_get(
+                    'https://www.nbrb.by/api/exrates/rates?'.http_build_query($fields),
+                    array( 'timeout' => 120, 'httpversion' => '1.1')
+                );
+            $currencyDataGet = wp_remote_retrieve_body( $response );
+            $currencyDataGet =json_decode($currencyDataGet,false );
             $currencyOptions = array_keys(get_option('option_curs_check'));
 
 
