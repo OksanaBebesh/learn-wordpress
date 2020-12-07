@@ -4,7 +4,6 @@ services:
 
   wpplagin:
     image: wordpress
-    restart: always
     ports:
       - 80:80
     environment:
